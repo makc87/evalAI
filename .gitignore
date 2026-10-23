@@ -1,0 +1,14 @@
+DOTPOIN_API_KEY=sk-2Eef84fHvKtFPwCiSQzGWw
+OPENAI_BASE_URL=https://llms.dotpoin.com/v1
+CHAT_MODEL=deepseek-chat
+EVAL_MODEL=openai:deepseek-chat
+CASES_PATH = BASE_DIR / "golden_cases.json"
+.pytest_cache/
+.eval_cache/
+.idea/
+.venv/
+venv/
+__pycache__/
+.env
+.env.*
+!.env.example
