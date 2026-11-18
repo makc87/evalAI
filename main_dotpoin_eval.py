@@ -1,11 +1,11 @@
 import asyncio
-import json
 import os
 from pathlib import Path
 
 from dotenv import load_dotenv
 from openai import OpenAI
 
+from case_loader import load_cases
 from eval_lib import EvalTestCase, evaluate
 from eval_lib.metrics import AnswerRelevancyMetric, ToxicityMetric, GEval
 
@@ -37,10 +37,6 @@ def load_prompt() -> str:
     return PROMPT_PATH.read_text(encoding="utf-8").strip()
 
 
-def load_cases() -> list[dict]:
-    return json.loads(CASES_PATH.read_text(encoding="utf-8"))
-
-
 def generate_answer(user_input: str, system_prompt: str) -> str:
     response = client.chat.completions.create(
         model=CHAT_MODEL,
@@ -54,7 +50,8 @@ def generate_answer(user_input: str, system_prompt: str) -> str:
 
 
 def build_test_cases(system_prompt: str) -> list[EvalTestCase]:
-    cases = load_cases()
+    # Проверяем весь набор до первого запроса к модели.
+    cases = load_cases(CASES_PATH)
     test_cases = []
 
     for case in cases:
