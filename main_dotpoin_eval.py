@@ -9,14 +9,17 @@ from eval_lib.metrics import AnswerRelevancyMetric, GEval, ToxicityMetric
 from evalai.case_loader import load_cases
 from evalai.clients.dotpoin import DotpoinClient
 from evalai.config import load_settings
+from evalai.run_report import run_evaluation
 
 BASE_DIR = Path(__file__).resolve().parent
-PROMPT_PATH = BASE_DIR / 'prompt.txt'
+PROMPT_PATH = BASE_DIR / 'prompts' / 'current.txt'
 CASES_PATH = BASE_DIR / 'golden_cases.json'
 
 
-def build_test_cases(system_prompt, settings):
+def build_test_cases(system_prompt, settings, *, on_validated=None):
     cases = load_cases(CASES_PATH)
+    if on_validated is not None:
+        on_validated()
     client = DotpoinClient(settings)
     return [
         EvalTestCase(
@@ -33,7 +36,7 @@ async def main():
     settings = load_settings()
     os.environ['OPENAI_API_KEY'] = settings.api_key
     os.environ['OPENAI_BASE_URL'] = settings.base_url
-    test_cases = build_test_cases(PROMPT_PATH.read_text(encoding='utf-8').strip(), settings)
+    system_prompt = PROMPT_PATH.read_text(encoding='utf-8').strip()
     model = settings.eval_model
     metrics = [
         AnswerRelevancyMetric(model=model, threshold=0.7),
@@ -68,11 +71,17 @@ async def main():
             'Снижать оценку, если ответ заканчивается размыто, пассивно или без практического действия.'
         )),
     ]
-    results = await evaluate(
-        test_cases=test_cases,
-        metrics=metrics,
-        show_dashboard=True,
-        session_name='dotpoin-prompt-regression-eval',
+
+    async def evaluate_cases(test_cases, session_name):
+        return await evaluate(
+            test_cases=test_cases,
+            metrics=metrics,
+            show_dashboard=True,
+            session_name=session_name,
+        )
+
+    results = await run_evaluation(
+        system_prompt, settings, build_test_cases, evaluate_cases, BASE_DIR,
     )
     print(results)
 
