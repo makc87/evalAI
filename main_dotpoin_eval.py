@@ -14,6 +14,7 @@ from evalai.run_report import run_evaluation
 BASE_DIR = Path(__file__).resolve().parent
 PROMPT_PATH = BASE_DIR / 'prompts' / 'current.txt'
 CASES_PATH = BASE_DIR / 'cases' / 'current.json'
+MAX_CONCURRENT_REQUESTS = int(os.getenv('MAX_CONCURRENT_REQUESTS', '3'))
 
 
 def build_test_cases(system_prompt, settings, *, on_validated=None):
@@ -21,14 +22,18 @@ def build_test_cases(system_prompt, settings, *, on_validated=None):
     if on_validated is not None:
         on_validated()
     client = DotpoinClient(settings)
-    return [
-        EvalTestCase(
+    semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
+
+    async def generate(case):
+        async with semaphore:
+            answer = await client.generate_answer_async(case['input'], system_prompt)
+        return EvalTestCase(
             input=case['input'],
-            actual_output=client.generate_answer(case['input'], system_prompt),
+            actual_output=answer,
             expected_output=case['expected_behavior'],
         )
-        for case in cases
-    ]
+
+    return [asyncio.create_task(generate(case)) for case in cases]
 
 
 async def main():
@@ -119,7 +124,8 @@ async def main():
         ),
     ]
 
-    async def evaluate_cases(test_cases, session_name):
+    async def evaluate_cases(test_case_tasks, session_name):
+        test_cases = await asyncio.gather(*test_case_tasks)
         return await evaluate(
             test_cases=test_cases,
             metrics=metrics,
