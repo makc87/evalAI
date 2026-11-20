@@ -48,7 +48,7 @@ async def run_evaluation(system_prompt, settings, build_cases, evaluate_cases, r
         nonlocal report_path
         digest, snapshot = save_prompt(system_prompt, root)
         now = datetime.now(timezone.utc)
-        run_id = f'dotpoin-eval-{now:%Y%m%dT%H%M%S%fZ}-{digest[:12]}-{uuid4().hex[:8]}'
+        run_id = f'dotpoin-eval-{now:%Y-%m-%d-%H-%M-%S-%f}Z-{digest[:12]}-{uuid4().hex[:8]}'
         report_path = root / 'reports' / f'{run_id}.json'
         report_path.parent.mkdir(parents=True, exist_ok=True)
         report.update(
