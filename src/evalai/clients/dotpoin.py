@@ -1,5 +1,7 @@
 """Отправка запросов агенту через OpenAI-совместимый API Dotpoin."""
 
+import asyncio
+
 from openai import OpenAI
 
 from evalai.config import Settings
@@ -21,3 +23,11 @@ class DotpoinClient:
             temperature=0.2,
         )
         return response.choices[0].message.content.strip()
+
+    async def generate_answer_async(self, user_input: str, system_prompt: str) -> str:
+        """Асинхронно выполнить блокирующий запрос к агенту."""
+        return await asyncio.to_thread(
+            self.generate_answer,
+            user_input,
+            system_prompt,
+        )
