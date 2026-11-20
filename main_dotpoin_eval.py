@@ -26,7 +26,7 @@ def build_test_cases(system_prompt, settings, *, on_validated=None):
 
     async def generate(case):
         async with semaphore:
-            answer = await client.generate_answer_async(case['input'], system_prompt)
+            answer = await client.generate_answer_async(case, system_prompt)
         return EvalTestCase(
             input=case['input'],
             actual_output=answer,
