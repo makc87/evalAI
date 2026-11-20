@@ -13,7 +13,7 @@ from evalai.run_report import run_evaluation
 
 BASE_DIR = Path(__file__).resolve().parent
 PROMPT_PATH = BASE_DIR / 'prompts' / 'current.txt'
-CASES_PATH = BASE_DIR / 'golden_cases.json'
+CASES_PATH = BASE_DIR / 'cases' / 'current.json'
 
 
 def build_test_cases(system_prompt, settings, *, on_validated=None):
